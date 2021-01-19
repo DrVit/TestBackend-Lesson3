@@ -1,30 +1,29 @@
 package ru.geekbrains;
 
 import org.junit.jupiter.api.Test;
+import ru.geekbrains.service.Endpoints;
 import ru.geekbrains.uploadimage.BaseTest;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-
 import static io.restassured.RestAssured.given;
-import static io.restassured.RestAssured.when;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class ImagesTests extends BaseTest {
-
 
     @Test
     void getImageCountTest() {
         given()
                 .headers(headers)
                 .expect()
+                .statusCode(200)
+                .statusLine("HTTP/1.1 200 OK")
                 .body("success", is(true))
                 .body("data", is(0))
                 .when()
-                .get("/account/{username}/images/count", username)
+                .get(Endpoints.getImageUserAccountCount, username)
                 .then()
-                .statusCode(200);
+                .spec(responseSpec);
+//                .statusCode(200);
 
     }
 
@@ -36,7 +35,7 @@ public class ImagesTests extends BaseTest {
                 .body("success", is(false))
                 .body("data.error", is("Unauthorized"))
                 .when()
-                .get("/account/{username}/images/count", username)
+                .get(Endpoints.getImageUserAccountCount, username)
                 .prettyPeek()
                 .then()
                 .statusCode(403);
@@ -50,7 +49,7 @@ public class ImagesTests extends BaseTest {
                .body("success", is(false))
                .body("data.error", is("Authentication required"))
                .when()
-               .get("/account/{username}/images/count", username)
+               .get(Endpoints.getImageUserAccountCount, username)
                .prettyPeek()
                .then()
                .statusCode(401);
@@ -60,17 +59,15 @@ public class ImagesTests extends BaseTest {
     @Test
     void getImageVerifyUrlTest() {
         String success = given()
-                .headers(headers)
-                .log()
-                .uri()
+                .spec(requestSpec)
+                .expect()
+                .statusCode(200)
+                .statusLine("HTTP/1.1 200 OK")
                 .when()
-                .get("/account/{username}/images/count", username)
+                .get(Endpoints.getImageUserAccountCount, username)
                 .prettyPeek()
                 .then()
-                .statusCode(200)
-                .contentType("application/json")
-                .log()
-                .status()
+                .spec(responseSpec)
                 .extract()
                 .response()
                 .jsonPath()
@@ -90,7 +87,7 @@ public class ImagesTests extends BaseTest {
                 .body("success", is(false))
                 .body("data.error", is("An image ID is required for a GET request to /image"))
                 .when()
-                .get("image/{imageHash}", uploadedImageHashCode)
+                .get(Endpoints.postImage, uploadedImageHashCode)
                 .prettyPeek()
                 .then()
                 .statusCode(400)
